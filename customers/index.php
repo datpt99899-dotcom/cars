@@ -1,0 +1,15 @@
+<?php
+require_once __DIR__ . "/../config/auth.php";
+require_once __DIR__ . "/../config/db.php";
+require_once __DIR__ . "/../config/helpers.php";
+$kw = trim($_GET['kw'] ?? '');
+$sql = "SELECT * FROM khachhang WHERE 1=1"; $params = [];
+if ($kw !== '') { $sql .= " AND (hoten LIKE ? OR sodienthoai LIKE ? OR socccd LIKE ?)"; $params[] = "%{$kw}%"; $params[] = "%{$kw}%"; $params[] = "%{$kw}%"; }
+$sql .= " ORDER BY makhachhang DESC";
+$stmt = $pdo->prepare($sql); $stmt->execute($params); $rows = $stmt->fetchAll();
+$title = 'Quản lý khách hàng'; require_once __DIR__ . '/../partials/header.php'; ?>
+<div class="page-header"><div><h1 class="page-title">Quản lý khách hàng</h1><p class="page-subtitle">Lưu trữ tập trung thông tin liên hệ, nhu cầu và nguồn khách.</p></div></div>
+<form class="row g-3 filter-bar" method="get"><div class="col-lg-10"><label class="form-label">Tìm kiếm</label><input class="form-control" name="kw" value="<?= e($kw) ?>" placeholder="Tìm theo tên / SĐT / CCCD"></div><div class="col-lg-2 d-grid align-self-end"><button class="btn btn-outline-secondary">Tìm</button></div></form>
+<div class="quick-grid quick-grid-five compact-summary-row"><div class="stat-tile"><small>Tổng khách hàng</small><b><?= count($rows) ?></b></div><div class="stat-tile"><small>Có email</small><b><?= count(array_filter($rows, fn($r)=>!empty($r['email']))) ?></b></div><div class="stat-tile"><small>Có CCCD</small><b><?= count(array_filter($rows, fn($r)=>!empty($r['socccd']))) ?></b></div><div class="stat-tile"><small>Có nhu cầu</small><b><?= count(array_filter($rows, fn($r)=>!empty($r['nhucau']))) ?></b></div><a class="stat-tile stat-action-tile" href="<?= url('customers/form.php') ?>"><span><i class="bi bi-person-plus me-2"></i>Thêm khách</span></a></div>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Mã</th><th>Khách hàng</th><th>Liên hệ</th><th>CCCD</th><th>Nhu cầu</th><th>Nguồn khách</th><th style="width:150px;">Thao tác</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?= (int)$r['makhachhang'] ?></td><td><div class="fw-semibold"><?= e($r['hoten']) ?></div><div class="small muted"><?= e($r['email'] ?: 'Chưa có email') ?></div></td><td><?= e($r['sodienthoai']) ?></td><td><?= e($r['socccd'] ?: 'Chưa có') ?></td><td><?= e($r['nhucau'] ?: 'Chưa cập nhật') ?></td><td><?= e($r['nguonkhach'] ?: 'Chưa cập nhật') ?></td><td><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="<?= url('customers/form.php?id='.(int)$r['makhachhang']) ?>"><i class="bi bi-pencil-square"></i></a><a class="btn btn-sm btn-outline-danger" href="<?= url('customers/delete.php?id='.(int)$r['makhachhang']) ?>" onclick="return confirm('Xóa khách hàng này?')"><i class="bi bi-trash3"></i></a></div></td></tr><?php endforeach; ?><?php if (empty($rows)): ?><tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bi bi-people"></i></div><div>Chưa có khách hàng nào.</div></div></td></tr><?php endif; ?></tbody></table></div>
+<?php require_once __DIR__ . '/../partials/footer.php'; ?>
